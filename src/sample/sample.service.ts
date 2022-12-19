@@ -1,54 +1,56 @@
+import { Injectable } from '@nestjs/common'
+
+import { Neo4jService } from 'nest-neo4j'
+
+import { Entity } from './entity/entity'
 import { UpdateDTO } from './dto/update.dto'
 import { CreateDTO } from './dto/create.dto'
-import { Entity } from './entity/entity'
-import { Injectable } from '@nestjs/common'
-import { Neo4jService } from 'nest-neo4j'
 
 @Injectable()
 export class SampleService {
     constructor(private readonly neo4jService: Neo4jService) {}
 
-    async create(sample: CreateDTO): Promise<Entity | undefined> {
+    async create(data: CreateDTO): Promise<Entity | undefined> {
         return this.neo4jService
             .write(
-                `CREATE (s:sample {
+                `CREATE (d:sample {
                     seq_method: $seq_method,
                     date: $date,
                     processing_date: $processing_date,
                     origin: $origin,
                     type: $type,
                     provided_by: $provided_by
-                }) RETURN s`,
+                }) RETURN d`,
                 {
-                    seq_method: sample.seq_method,
-                    date: sample.date,
-                    processing_date: sample.processing_date,
-                    origin: sample.origin,
-                    type: sample.type,
-                    provided_by: sample.provided_by,
+                    seq_method: data.seq_method,
+                    date: data.date,
+                    processing_date: data.processing_date,
+                    origin: data.origin,
+                    type: data.type,
+                    provided_by: data.provided_by,
                 }
             )
-            .then(({ records }) => new Entity(records[0].get('s')))
+            .then(({ records }) => new Entity(records[0].get('d')))
     }
 
     async get(id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (s:sample {
+            `MATCH (d:sample {
                 ID: $id
-            }) RETURN u`,
+            }) RETURN d`,
             { id }
         )
 
         return res.records.length
-            ? new Entity(res.records[0].get('s'))
+            ? new Entity(res.records[0].get('d'))
             : undefined
     }
 
     async all(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (s:sample {
+            `MATCH (d:sample {
                 provided_by: $provided_by
-            }) RETURN u`,
+            }) RETURN d`,
             { provided_by }
         )
 
@@ -59,26 +61,26 @@ export class SampleService {
 
     async update(id: string, update: UpdateDTO): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (s:sample {
+            `MATCH (d:sample {
                 ID: $id
             })
-            SET s += $update
-            RETURN s`,
+            SET d += $update
+            RETURN d`,
             { id, update }
         )
 
         return res.records.length
-            ? new Entity(res.records[0].get('s'))
+            ? new Entity(res.records[0].get('d'))
             : undefined
     }
 
     async delete(id: string): Promise<string | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (s:sample {
+            `MATCH (d:sample {
                 ID: $id
             })
-            REMOVE s
-            RETURN s`,
+            REMOVE d
+            RETURN d`,
             { id }
         )
 

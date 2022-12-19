@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { SampleModule } from './sample/sample.module';
+
 import { Neo4jModule, Neo4jScheme } from 'nest-neo4j';
+
+import { SampleModule } from './sample/sample.module';
+import { AssmdlModule } from './assmdl/assmdl.module';
 
 @Module({
   imports: [
@@ -14,6 +17,7 @@ import { Neo4jModule, Neo4jScheme } from 'nest-neo4j';
       username: process.env.NEO4J_USER || 'neo4j',
       password: process.env.NEO4J_PASS || 'vs-analysis-db',
     }),
+    AssmdlModule,
   ],
   controllers: [AppController],
   providers: [AppService],
