@@ -6,6 +6,7 @@ import { Neo4jModule, Neo4jScheme } from 'nest-neo4j';
 
 import { SampleModule } from './sample/sample.module';
 import { AssmdlModule } from './assmdl/assmdl.module';
+import { VsmdlModule } from './vsmdl/vsmdl.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AssmdlModule } from './assmdl/assmdl.module';
       password: process.env.NEO4J_PASS || 'vs-analysis-db',
     }),
     AssmdlModule,
+    VsmdlModule,
   ],
   controllers: [AppController],
   providers: [AppService],
