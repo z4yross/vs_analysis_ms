@@ -3,7 +3,4 @@ import dayjs from 'dayjs'
 
 export class CreateDTO {
     name: string
-    type: string
-    description: string
 }
-

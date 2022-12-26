@@ -7,6 +7,9 @@ import { Neo4jModule, Neo4jScheme } from 'nest-neo4j';
 import { SampleModule } from './sample/sample.module';
 import { AssmdlModule } from './assmdl/assmdl.module';
 import { VsmdlModule } from './vsmdl/vsmdl.module';
+import { PtnmdlModule } from './ptnmdl/ptnmdl.module';
+import { LctmdlModule } from './lctmdl/lctmdl.module';
+import { VrnmdlModule } from './vrnmdl/vrnmdl.module';
 
 @Module({
   imports: [
@@ -20,6 +23,9 @@ import { VsmdlModule } from './vsmdl/vsmdl.module';
     }),
     AssmdlModule,
     VsmdlModule,
+    PtnmdlModule,
+    LctmdlModule,
+    VrnmdlModule,
   ],
   controllers: [AppController],
   providers: [AppService],
