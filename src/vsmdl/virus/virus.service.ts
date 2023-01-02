@@ -86,4 +86,43 @@ export class VirusService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a virus to a strain
+    async addVirusToStrain(virusID: string, strainID: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (v:${this.CLASS_LABEL} {
+                ID: $virusID
+            })
+            MATCH (s:strain {
+                ID: $strainID
+            })
+            CREATE (v) -[:HAS_VIRUS]-> (s)
+            RETURN v`,
+            { virusID, strainID }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('v'))
+            : undefined
+    }
+
+    // remove a virus from a strain
+    async removeVirusFromStrain(virusID: string, strainID: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (v:${this.CLASS_LABEL} {
+                ID: $virusID
+            })
+            MATCH (s:strain {
+                ID: $strainID
+            })
+            MATCH (v) -[r:HAS_VIRUS]-> (s)
+            DELETE r
+            RETURN v`,
+            { virusID, strainID }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('v'))
+            : undefined
+    }
 }
