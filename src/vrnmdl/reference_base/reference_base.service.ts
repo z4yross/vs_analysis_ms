@@ -33,10 +33,23 @@ export class ReferenceBaseService {
             : undefined
     }
 
-    async all(id: string): Promise<Entity[] | undefined> {
+    // all reference_base of a assembly_base
+    async referenceBaseOfAssemblyBase(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} -- a:assembly_base{ID: $id}) RETURN p`,
+            `MATCH (p:${this.CLASS_LABEL}) -- (a:assembly_base{ID: $id}) RETURN p`,
             { id }
+        )
+
+        return res.records.length
+            ? res.records.map((r) => new Entity(r.get('p')))
+            : undefined
+    }
+
+    // all reference_base of a sample
+    async referenceBaseOfSample(provided_by: string): Promise<Entity[] | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL}) -- (:assembly_base) -- (a:sample{provided_by: $provided_by}) RETURN p`,
+            { provided_by }
         )
 
         return res.records.length

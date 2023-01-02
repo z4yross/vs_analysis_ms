@@ -8,19 +8,23 @@ import { CreateDTO } from './dto/create.dto'
 
 @Injectable()
 export class PatientService {
+    private readonly CLASS_LABEL: string = 'patient'
+
     constructor(private readonly neo4jService: Neo4jService) {}
 
     async create(data: CreateDTO): Promise<Entity | undefined> {
         return this.neo4jService
-            .write(`CREATE (p:patient $data) RETURN p`, { data: data })
+            .write(`CREATE (p:${this.CLASS_LABEL} $data) RETURN p`, {
+                data: data,
+            })
             .then(({ records }) => new Entity(records[0].get('p')))
     }
 
     async get(id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (p:patient {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
-            }) RETURN s`,
+            }) RETURN p`,
             { id }
         )
 
@@ -29,9 +33,10 @@ export class PatientService {
             : undefined
     }
 
-    async all(provided_by: string): Promise<Entity[] | undefined> {
+    // all patients for a sample
+    async patientsOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (p:patient -- a:sample{provided_by: $provided_by}) RETURN p`,
+            `MATCH (p:${this.CLASS_LABEL}) -- (a:sample{provided_by: $provided_by}) RETURN p`,
             { provided_by }
         )
 
@@ -42,7 +47,7 @@ export class PatientService {
 
     async update(id: string, update: UpdateDTO): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (p:patient {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
             SET p += $update
@@ -57,7 +62,7 @@ export class PatientService {
 
     async delete(id: string): Promise<string | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (p:patient {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
             REMOVE p

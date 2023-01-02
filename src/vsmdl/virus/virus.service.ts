@@ -8,42 +8,48 @@ import { CreateDTO } from './dto/create.dto'
 
 @Injectable()
 export class VirusService {
+    private readonly CLASS_LABEL: string = 'virus'
+
     constructor(private readonly neo4jService: Neo4jService) {}
 
     async create(data: CreateDTO): Promise<Entity | undefined> {
         return this.neo4jService
-            .write(
-                `CREATE (v:virus {
-                    name: $name
-                    type: $type
-                    description: $description
-                }) RETURN v`,
-                {
-                    name: data.name,
-                    type: data.type,
-                    description: data.description
-                }
-            )
-            .then(({ records }) => new Entity(records[0].get('v')))
+            .write(`CREATE (p:${this.CLASS_LABEL} $data) RETURN p`, {
+                data: data,
+            })
+            .then(({ records }) => new Entity(records[0].get('p')))
     }
 
     async get(id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (v:virus {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
-            }) RETURN v`,
+            }) RETURN p`,
             { id }
         )
 
         return res.records.length
-            ? new Entity(res.records[0].get('v'))
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
+    
+    // all virus of a strain
+    async virusOfStrain(strainID: string): Promise<Entity[] | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (v:virus) -- (s:strain{ID: $strainID}) RETURN v`,
+            { strainID }
+        )
+
+        return res.records.length
+            ? res.records.map((r) => new Entity(r.get('v')))
             : undefined
     }
 
-    async all(strainID: string): Promise<Entity[] | undefined> {
+    // all virus of a sample
+    async virusOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (v:virus -- s:strain{ID: $strainID}) RETURN v`,
-            { strainID }
+            `MATCH (v:virus) -- (:strain) -- (s:sample{provided_by: $provided_by}) RETURN v`,
+            { provided_by }
         )
 
         return res.records.length
@@ -53,26 +59,26 @@ export class VirusService {
 
     async update(id: string, update: UpdateDTO): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (v:virus {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
-            SET v += $update
-            RETURN v`,
+            SET p += $update
+            RETURN p`,
             { id, update }
         )
 
         return res.records.length
-            ? new Entity(res.records[0].get('v'))
+            ? new Entity(res.records[0].get('p'))
             : undefined
     }
 
     async delete(id: string): Promise<string | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (v:virus {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
-            REMOVE v
-            RETURN v`,
+            REMOVE p
+            RETURN p`,
             { id }
         )
 

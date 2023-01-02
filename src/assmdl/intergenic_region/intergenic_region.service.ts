@@ -8,67 +8,89 @@ import { CreateDTO } from './dto/create.dto'
 
 @Injectable()
 export class IntergenicRegionService {
+    private readonly CLASS_LABEL: string = 'intergenic_region'
+
     constructor(private readonly neo4jService: Neo4jService) {}
 
     async create(data: CreateDTO): Promise<Entity | undefined> {
         return this.neo4jService
-            .write(
-                `CREATE (ir:intergenic_region {
-                    name: $name
-                }) RETURN ir`,
-                {
-                    ...data,
-                }
-            )
-            .then(({ records }) => new Entity(records[0].get('ir')))
+            .write(`CREATE (p:${this.CLASS_LABEL} $data) RETURN p`, {
+                data: data,
+            })
+            .then(({ records }) => new Entity(records[0].get('p')))
     }
 
-    // assembly with id
     async get(id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (ir:intergenic_region {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
-            }) RETURN ir`,
+            }) RETURN p`,
             { id }
         )
 
-        return res.records.length ? new Entity(res.records[0].get('g')) : undefined
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
     }
 
-    // all utr of a feature
-    async all(assemblyID: string): Promise<Entity[] | undefined> {
+    // all intergenic region of a feature
+    async intergenicRegionOfFeature(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (ir:intergenic_region-[HAS]-f:feature{ID:$id}) RETURN ir`,
-            { id: assemblyID }
+            `MATCH (p:${this.CLASS_LABEL}) -- (f:feature{ID: $id}) RETURN p`,
+            { id }
         )
 
         return res.records.length
-            ? res.records.map((r) => new Entity(r.get('ir')))
+            ? res.records.map((r) => new Entity(r.get('p')))
+            : undefined
+    }
+
+    // all intergenic region of a assembly
+    async intergenicRegionOfAsembly(id: string): Promise<Entity[] | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL}) -- (:feature) -- (a:assembly{ID: $id}) RETURN p`,
+            { id }
+        )
+
+        return res.records.length
+            ? res.records.map((r) => new Entity(r.get('p')))
+            : undefined
+    }
+
+    // all intergenic region of a sample
+    async intergenicRegionOfSample(provided_by: string): Promise<Entity[] | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL}) -- (:feature) -- (:assembly) -- (s:sample{provided_by: $provided_by}) RETURN p`,
+            { provided_by }
+        )
+
+        return res.records.length
+            ? res.records.map((r) => new Entity(r.get('p')))
             : undefined
     }
 
     async update(id: string, update: UpdateDTO): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (ir:intergenic_region {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
-            SET ir += $update
-            RETURN ir`,
+            SET p += $update
+            RETURN p`,
             { id, update }
         )
 
         return res.records.length
-            ? new Entity(res.records[0].get('ir'))
+            ? new Entity(res.records[0].get('p'))
             : undefined
     }
 
     async delete(id: string): Promise<string | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (ir:intergenic_region{
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
-            REMOVE ir
-            RETURN ir`,
+            REMOVE p
+            RETURN p`,
             { id }
         )
 

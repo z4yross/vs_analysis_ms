@@ -33,10 +33,11 @@ export class AssemblyReadService {
             : undefined
     }
 
-    async all(id: string): Promise<Entity[] | undefined> {
+    // all assembly_read of a sample
+    async assemblyReadOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} -- a:assembly_read{ID: $id}) RETURN p`,
-            { id }
+            `MATCH (p:${this.CLASS_LABEL}) -- (a:sample{provided_by: $provided_by}) RETURN p`,
+            { provided_by }
         )
 
         return res.records.length

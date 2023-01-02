@@ -33,10 +33,23 @@ export class HumanVariantService {
             : undefined
     }
 
-    async all(id: string): Promise<Entity[] | undefined> {
+    // all human_variant of a patient
+    async humanVariantOfPatient(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} -- a:patient{ID: $id}) RETURN p`,
+            `MATCH (p:${this.CLASS_LABEL}) -- (a:patient{ID: $id}) RETURN p`,
             { id }
+        )
+
+        return res.records.length
+            ? res.records.map((r) => new Entity(r.get('p')))
+            : undefined
+    }
+
+    // all human_variant of a sample
+    async humanVariantOfSample(provided_by: string): Promise<Entity[] | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL}) -- (:patient) -- (a:sample{provided_by: $provided_by}) RETURN p`,
+            { provided_by }
         )
 
         return res.records.length

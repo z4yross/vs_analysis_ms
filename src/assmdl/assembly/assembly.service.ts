@@ -8,81 +8,65 @@ import { CreateDTO } from './dto/create.dto'
 
 @Injectable()
 export class AssemblyService {
+    private readonly CLASS_LABEL: string = 'assembly'
+
     constructor(private readonly neo4jService: Neo4jService) {}
 
     async create(data: CreateDTO): Promise<Entity | undefined> {
         return this.neo4jService
-            .write(
-                `CREATE (a:assembly {
-                    length: $length,
-                    perc_GC: $perc_GC,
-                    completness: $completness,
-                    contigs_num: $contigs_num,
-                    gene_num: $gene_num,
-                    startegy: $startegy,
-                    fasta: $fasta,
-                    vcf: $vcf,
-                    bam: $bam,
-                    depht: $depht,
-                    coverage: $coverage,
-                    prequalityfile: $prequalityfile,
-                    postqualityfile: $postqualityfile,
-                }) RETURN a`,
-                {
-                    ...data,
-                }
-            )
-            .then(({ records }) => new Entity(records[0].get('a')))
+            .write(`CREATE (p:${this.CLASS_LABEL} $data) RETURN p`, {
+                data: data,
+            })
+            .then(({ records }) => new Entity(records[0].get('p')))
     }
 
-    // assembly with id
     async get(id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (a:assembly {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
-            }) RETURN a`,
+            }) RETURN p`,
             { id }
         )
 
         return res.records.length
-            ? new Entity(res.records[0].get('a'))
+            ? new Entity(res.records[0].get('p'))
             : undefined
     }
 
-    // all asseblys that process a sample
-    async all(sampleID: string): Promise<Entity[] | undefined> {
+    // all asseblys of a sample
+    async assemblysOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (a:assembly-[PROCESS]-s:sample{ID:$id}) RETURN a`,
-            { id: sampleID }
+            `MATCH (p:${this.CLASS_LABEL}) -- (a:sample{provided_by: $provided_by}) RETURN p`,
+            { provided_by }
         )
 
         return res.records.length
-            ? res.records.map((r) => new Entity(r.get('a')))
+            ? res.records.map((r) => new Entity(r.get('p')))
             : undefined
     }
-
+    
     async update(id: string, update: UpdateDTO): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (a:assembly {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
-            SET a += $update
-            RETURN a`,
+            SET p += $update
+            RETURN p`,
             { id, update }
         )
 
         return res.records.length
-            ? new Entity(res.records[0].get('a'))
+            ? new Entity(res.records[0].get('p'))
             : undefined
     }
 
     async delete(id: string): Promise<string | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (a:assembly{
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
-            REMOVE a
-            RETURN a`,
+            REMOVE p
+            RETURN p`,
             { id }
         )
 

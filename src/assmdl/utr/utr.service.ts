@@ -8,67 +8,89 @@ import { CreateDTO } from './dto/create.dto'
 
 @Injectable()
 export class UtrService {
+    private readonly CLASS_LABEL: string = 'protein'
+
     constructor(private readonly neo4jService: Neo4jService) {}
 
     async create(data: CreateDTO): Promise<Entity | undefined> {
         return this.neo4jService
-            .write(
-                `CREATE (u:utr {
-                    name: $name
-                }) RETURN u`,
-                {
-                    ...data,
-                }
-            )
-            .then(({ records }) => new Entity(records[0].get('u')))
+            .write(`CREATE (p:${this.CLASS_LABEL} $data) RETURN p`, {
+                data: data,
+            })
+            .then(({ records }) => new Entity(records[0].get('p')))
     }
 
-    // assembly with id
     async get(id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (u:utr {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
-            }) RETURN u`,
+            }) RETURN p`,
             { id }
         )
 
-        return res.records.length ? new Entity(res.records[0].get('u')) : undefined
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
     }
 
     // all utr of a feature
-    async all(assemblyID: string): Promise<Entity[] | undefined> {
+    async utrOfFeature(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (u:utr-[HAS]-f:feature{ID:$id}) RETURN u`,
-            { id: assemblyID }
+            `MATCH (p:${this.CLASS_LABEL} -- (f:feature{ID: $id}) RETURN p`,
+            { id }
         )
 
         return res.records.length
-            ? res.records.map((r) => new Entity(r.get('u')))
+            ? res.records.map((r) => new Entity(r.get('p')))
+            : undefined
+    }
+
+    // all utr of a assembly
+    async utrOfAssembly(id: string): Promise<Entity[] | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL}) -- (f:feature) -- (a:assembly{ID: $id}) RETURN p`,
+            { id }
+        )
+
+        return res.records.length
+            ? res.records.map((r) => new Entity(r.get('p')))
+            : undefined
+    }
+
+    // all utr of a sample
+    async utrOfSample(provided_by: string): Promise<Entity[] | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL}) -- (f:feature) -- (a:assembly) -- (s:sample{provided_by: $provided_by}) RETURN p`,
+            { provided_by }
+        )
+
+        return res.records.length
+            ? res.records.map((r) => new Entity(r.get('p')))
             : undefined
     }
 
     async update(id: string, update: UpdateDTO): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (u:utr {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
-            SET u += $update
-            RETURN u`,
+            SET p += $update
+            RETURN p`,
             { id, update }
         )
 
         return res.records.length
-            ? new Entity(res.records[0].get('u'))
+            ? new Entity(res.records[0].get('p'))
             : undefined
     }
 
     async delete(id: string): Promise<string | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (u:utr{
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
-            REMOVE u
-            RETURN u`,
+            REMOVE p
+            RETURN p`,
             { id }
         )
 

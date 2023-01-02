@@ -9,41 +9,27 @@ import { CreateDTO } from './dto/create.dto'
 
 @Injectable()
 export class FeatureService {
+    private readonly CLASS_LABEL: string = 'feature'
+
     constructor(private readonly neo4jService: Neo4jService) {}
 
     async create(data: CreateDTO): Promise<Entity | undefined> {
         return this.neo4jService
-            .write(
-                `CREATE (f:feature {
-                    type: $type
-                    start: $start
-                    end: $end
-                    name: $name
-                    sequence: $sequence
-                    length: $length
-                    md5checksum: $md5checksum
-                    annotation_level: $annotation_level
-                    access_time: $access_time
-                    last_modified: $last_modified
-                    frame: $frame
-                }) RETURN f`,
-                {
-                    ...data,
-                }
-            )
-            .then(({ records }) => new Entity(records[0].get('f')))
+            .write(`CREATE (p:${this.CLASS_LABEL} $data) RETURN p`, {
+                data: data,
+            })
+            .then(({ records }) => new Entity(records[0].get('p')))
     }
 
-    // assembly with id
     async get(id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (f:feature {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
-            }) RETURN f`,
+            }) RETURN p`,
             { id }
         )
 
-        const e = new Entity(res.records[0].get('f'))
+        const e = new Entity(res.records[0].get('p'))
         const u: UpdateDTO = new UpdateDTO()
 
         u.access_time = dayjs().format()
@@ -54,14 +40,14 @@ export class FeatureService {
     }
 
     // all features of an assembly
-    async all(assemblyID: string): Promise<Entity[] | undefined> {
+    async featuresOfAssembly(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (f:feature-[HAS]-a:assembly{ID:$id}) RETURN f`,
-            { id: assemblyID }
+            `MATCH (p:${this.CLASS_LABEL}) -- (a:assembly{ID: $id}) RETURN p`,
+            { id }
         )
 
         res.records.forEach(async (r) => {
-            const e = new Entity(r.get('f'))
+            const e = new Entity(r.get('p'))
             const u: UpdateDTO = new UpdateDTO()
 
             u.access_time = dayjs().format()
@@ -70,22 +56,43 @@ export class FeatureService {
         })
 
         return res.records.length
-            ? res.records.map((r) => new Entity(r.get('f')))
+            ? res.records.map((r) => new Entity(r.get('p')))
+            : undefined
+    }
+
+    // all features of a sample
+    async featuresOfSample(provided_by: string): Promise<Entity[] | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL}) -- (:assembly) -- (s:sample{provided_by: $provided_by}) RETURN p`,
+            { provided_by }
+        )
+
+        res.records.forEach(async (r) => {
+            const e = new Entity(r.get('p'))
+            const u: UpdateDTO = new UpdateDTO()
+
+            u.access_time = dayjs().format()
+
+            await this.update(e.get().ID, u)
+        })
+
+        return res.records.length
+            ? res.records.map((r) => new Entity(r.get('p')))
             : undefined
     }
 
     async update(id: string, update: UpdateDTO): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (f:feature {
+            `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
-            SET f += $update
-            RETURN f`,
+            SET p += $update
+            RETURN p`,
             { id, update }
         )
 
         return res.records.length
-            ? new Entity(res.records[0].get('f'))
+            ? new Entity(res.records[0].get('p'))
             : undefined
     }
 
