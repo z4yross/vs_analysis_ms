@@ -34,7 +34,7 @@ export class ReferenceContigService {
     }
 
     // all reference_contig of a reference_base
-    async referenceContigOfReferenceBase(id: string): Promise<Entity[] | undefined> {
+    async referenceContigsOfReferenceBase(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (a:reference_base{ID: $id}) RETURN p`,
             { id }
@@ -46,7 +46,7 @@ export class ReferenceContigService {
     }
 
     // all reference_contig of a assembly_base
-    async referenceContigOfAssemblyBase(id: string): Promise<Entity[] | undefined> {
+    async referenceContigsOfAssemblyBase(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (:reference_base) -- (a:assembly_base{ID: $id}) RETURN p`,
             { id }
@@ -58,7 +58,7 @@ export class ReferenceContigService {
     }
 
     // all reference_contig of a assembly_read
-    async referenceContigOfAssemblyRead(id: string): Promise<Entity[] | undefined> {
+    async referenceContigsOfAssemblyRead(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (:reference_base) -- (:assembly_base) -- (a:assembly_read{ID: $id}) RETURN p`,
             { id }
@@ -70,7 +70,7 @@ export class ReferenceContigService {
     }
 
     // all reference_contig of a sample
-    async referenceContigOfSample(provided_by: string): Promise<Entity[] | undefined> {
+    async referenceContigsOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (:reference_base) -- (:assembly_base) -- (:assembly_read) -- (a:sample{provided_by: $provided_by}) RETURN p`,
             { provided_by }

@@ -34,7 +34,7 @@ export class ReferenceGenomeService {
     }
 
     // all reference_genome of a reference_contig
-    async referenceGenomeOfReferenceContig(id: string): Promise<Entity[] | undefined> {
+    async referenceGenomesOfReferenceContig(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (a:reference_contig{ID: $id}) RETURN p`,
             { id }
@@ -46,7 +46,7 @@ export class ReferenceGenomeService {
     }
 
     // all reference_genome of a reference_base
-    async referenceGenomeOfReferenceBase(id: string): Promise<Entity[] | undefined> {
+    async referenceGenomesOfReferenceBase(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (:reference_contig) -- (a:reference_base{ID: $id}) RETURN p`,
             { id }
@@ -58,7 +58,7 @@ export class ReferenceGenomeService {
     }
 
     // all reference_genome of a assembly_base
-    async referenceGenomeOfAssemblyBase(id: string): Promise<Entity[] | undefined> {
+    async referenceGenomesOfAssemblyBase(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (:reference_contig) -- (:reference_base) -- (a:assembly_base{ID: $id}) RETURN p`,
             { id }
@@ -70,7 +70,7 @@ export class ReferenceGenomeService {
     }
 
     // all reference_genome of a assembly_read
-    async referenceGenomeOfAssemblyRead(id: string): Promise<Entity[] | undefined> {
+    async referenceGenomesOfAssemblyRead(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (:reference_contig) -- (:reference_base) -- (:assembly_base) -- (a:assembly_read{ID: $id}) RETURN p`,
             { id }
@@ -82,7 +82,7 @@ export class ReferenceGenomeService {
     }
 
     // all reference_genome of a sample
-    async referenceGenomeOfSample(provided_by: string): Promise<Entity[] | undefined> {
+    async referenceGenomesOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (:reference_contig) -- (:reference_base) -- (:assembly_base) -- (:assembly_read) -- (a:sample{provided_by: $provided_by}) RETURN p`,
             { provided_by }
