@@ -37,12 +37,12 @@ export class AssemblyController {
     }
 
     @Put(':sample_id/:assembly_id')
-    async addSampleToAssembly(@Param('sample_id') sample_id: string, @Param('assembly_id') assembly_id: string): Promise<Entity | undefined> {
-        return this.assemblyService.addSampleToAssembly(sample_id, assembly_id);
+    async addAssemblyToSample(@Param('sample_id') sample_id: string, @Param('assembly_id') assembly_id: string): Promise<Entity | undefined> {
+        return this.assemblyService.addSample(sample_id, assembly_id);
     }
 
     @Delete(':sample_id/:assembly_id')
-    async removeSampleFromAssembly(@Param('sample_id') sample_id: string, @Param('assembly_id') assembly_id: string): Promise<Entity | undefined> {
-        return this.assemblyService.removeSampleFromAssembly(sample_id, assembly_id);
+    async removeAssemblyFromSample(@Param('sample_id') sample_id: string, @Param('assembly_id') assembly_id: string): Promise<Entity | undefined> {
+        return this.assemblyService.removeSample(sample_id, assembly_id);
     }
 }

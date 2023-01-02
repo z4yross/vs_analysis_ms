@@ -76,17 +76,17 @@ export class AssemblyService {
     }
 
     // add sample to assembly
-    async addSampleToAssembly(id: string, provided_by: string): Promise<Entity | undefined> {
+    async addSample(id: string, sample_id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
             MATCH (s:sample {
-                provided_by: $provided_by
+                ID: $sample_id
             })
             CREATE (p) -[:ASSEMBLY_OF]-> (s)
             RETURN p`,
-            { id, provided_by }
+            { id, sample_id }
         )
 
         return res.records.length
@@ -95,18 +95,18 @@ export class AssemblyService {
     }
 
     // remove sample from assembly
-    async removeSampleFromAssembly(id: string, provided_by: string): Promise<Entity | undefined> {
+    async removeSample(id: string, sample_id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
             MATCH (s:sample {
-                provided_by: $provided_by
+                ID: $sample_id
             })
             MATCH (p) -[r:ASSEMBLY_OF]-> (s)
             DELETE r
             RETURN p`,
-            { id, provided_by }
+            { id, sample_id }
         )
 
         return res.records.length

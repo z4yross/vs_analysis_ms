@@ -32,4 +32,43 @@ export class CityZoneService {
             ? res.records.map((r) => new Entity(r.get('z')))
             : undefined
     }
+
+    // add zone to sample
+    async addZoneToSample(sample_id: string, code: number): Promise<Entity | undefined> { // add zone to sample
+        const res = await this.neo4jService.write(
+            `MATCH (s:sample {
+                ID: $sample_id
+            })
+            MATCH (z:zone {
+                code: $code
+            })
+            MERGE (s)-[:in]->(z)
+            RETURN s`,
+            { sample_id, code }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('s'))
+            : undefined
+    }
+
+    // remove zone from sample
+    async removeZoneFromSample(sample_id: string, code: number): Promise<Entity | undefined> {
+        const res = await this.neo4jService.write(
+            `MATCH (s:sample {
+                ID: $sample_id
+            }),
+            MATCH (z:zone {
+                code: $code
+            })
+            MATCH (s)-[r:in]->(z)
+            DELETE r
+            RETURN s`,
+            { sample_id, code }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('s'))
+            : undefined
+    }
 }

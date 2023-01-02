@@ -35,14 +35,14 @@ export class AssemblyReadController {
         return this.assemblyReadService.delete(id);
     }
 
-    @Put(':assembly_read/:provided_by')
-    async addSampleToAssemblyRead(@Param('assembly_read') assembly_read: string, @Param('provided_by') provided_by: string): Promise<Entity | undefined> {
-        return this.assemblyReadService.addSampleToAssemblyRead(assembly_read, provided_by);
+    @Put(':assembly_read/:sample_id')
+    async addSampleToAssemblyRead(@Param('assembly_read') assembly_read: string, @Param('sample_id') sample_id: string): Promise<Entity | undefined> {
+        return this.assemblyReadService.addSample(assembly_read, sample_id);
     }
 
-    @Delete(':assembly_read/:sample')
-    async removeSampleFromAssemblyRead(@Param('assembly_read') assembly_read: string, @Param('provided_by') provided_by: string): Promise<Entity | undefined> {
-        return this.assemblyReadService.removeSampleFromAssemblyRead(assembly_read, provided_by);
+    @Delete(':assembly_read/:sample_id')
+    async removeSampleFromAssemblyRead(@Param('assembly_read') assembly_read: string, @Param('sample_id') sample_id: string): Promise<Entity | undefined> {
+        return this.assemblyReadService.removeSample(assembly_read, sample_id);
     }
 
 }

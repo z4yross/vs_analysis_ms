@@ -35,13 +35,13 @@ export class StrainController {
         return this.strainService.delete(id);
     }
 
-    @Put(':strain/:provided_by')
-    async addSampleToStrain(@Param('strain') strain: string, @Param('provided_by') provided_by: string): Promise<Entity | undefined> {
-        return this.strainService.addSample(strain, provided_by);
+    @Put(':strain_id/:sample_id')
+    async addSampleToStrain(@Param('strain_id') strain_id: string, @Param('sample_id') sample_id: string): Promise<Entity | undefined> {
+        return this.strainService.addSample(strain_id, sample_id);
     }
 
-    @Delete(':strain/:provided_by')
-    async removeSampleFromStrain(@Param('strain') strain: string, @Param('provided_by') provided_by: string): Promise<Entity | undefined> {
-        return this.strainService.removeSample(strain, provided_by);
+    @Delete(':strain_id/:sample_id')
+    async removeSampleFromStrain(@Param('strain_id') strain_id: string, @Param('sample_id') sample_id: string): Promise<Entity | undefined> {
+        return this.strainService.removeSample(strain_id, sample_id);
     }
 }

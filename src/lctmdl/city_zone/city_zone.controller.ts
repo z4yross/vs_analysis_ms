@@ -17,4 +17,14 @@ export class CityZoneController {
     async zoneOfSample(@Param('provided_by') provided_by: string): Promise<Entity[] | undefined> {
         return this.cityZoneService.zoneOfSample(provided_by);
     }
+
+    @Put(':sample_id/:code')
+    async addZoneToSample(@Param('sample_id') sample_id: string, @Param('code') code: number): Promise<Entity | undefined> {
+        return this.cityZoneService.addZoneToSample(sample_id, code);
+    }
+
+    @Delete(':sample_id/:code')
+    async removeZoneFromSample(@Param('sample_id') sample_id: string, @Param('code') code: number): Promise<Entity | undefined> {
+        return this.cityZoneService.removeZoneFromSample(sample_id, code);
+    }
 }
