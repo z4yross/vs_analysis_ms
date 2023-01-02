@@ -93,4 +93,24 @@ export class AssemblyService {
             ? new Entity(res.records[0].get('p'))
             : undefined
     }
+
+    // remove sample from assembly
+    async removeSampleFromAssembly(id: string, provided_by: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $id
+            })
+            MATCH (s:sample {
+                provided_by: $provided_by
+            })
+            MATCH (p) -[r:ASSEMBLY_OF]-> (s)
+            DELETE r
+            RETURN p`,
+            { id, provided_by }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }

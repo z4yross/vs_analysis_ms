@@ -129,4 +129,24 @@ export class FeatureService {
             ? new Entity(res.records[0].get('f'))
             : undefined
     }
+
+    // remove a feature from an assembly
+    async removeFeatureFromAssembly(assembly_id: string, feature_id: string) {
+        const res = await this.neo4jService.write(
+            `MATCH (f:${this.CLASS_LABEL} {
+                ID: $feature_id
+            })
+            MATCH (a:assembly {
+                ID: $assembly_id
+            })
+            MATCH (a) -[r:has]-> (f)
+            DELETE r
+            RETURN f`,
+            { assembly_id, feature_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('f'))
+            : undefined
+    }
 }

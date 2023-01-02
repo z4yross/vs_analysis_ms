@@ -117,4 +117,24 @@ export class GeneService {
             ? new Entity(res.records[0].get('p'))
             : undefined
     }
+
+    // remove a feature from a gene
+    async removeFeature(id: string, feature_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $id
+            })
+            MATCH (f:feature {
+                ID: $feature_id
+            })
+            MATCH (p) -[r:HAS_FEATURE]-> (f)
+            DELETE r
+            RETURN p`,
+            { id, feature_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }
