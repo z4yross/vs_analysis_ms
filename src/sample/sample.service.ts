@@ -34,7 +34,7 @@ export class SampleService {
     }
 
     // all samples
-    async allSamples(provided_by: string): Promise<Entity[] | undefined> {
+    async samplesOfProvider(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} { provided_by: $provided_by }) RETURN p`,
             { provided_by }
