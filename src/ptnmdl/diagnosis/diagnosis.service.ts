@@ -86,4 +86,43 @@ export class DiagnosisService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a patient to a diagnosis
+    async addPatientToDiagnosis(patient_id: string, diagnosis_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (d:${this.CLASS_LABEL} {
+                ID: $diagnosis_id
+            })
+            MATCH (p:patient {
+                ID: $patient_id
+            })
+            MERGE (d) - [:has_patient] -> (p)
+            RETURN d`,
+            { patient_id, diagnosis_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('d'))
+            : undefined
+    }
+
+    // remove a patient from a diagnosis
+    async removePatientFromDiagnosis(patient_id: string, diagnosis_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (d:${this.CLASS_LABEL} {
+                ID: $diagnosis_id
+            })
+            MATCH (p:patient {
+                ID: $patient_id
+            })
+            MATCH (d) - [r:has_patient] -> (p)
+            DELETE r
+            RETURN d`,
+            { patient_id, diagnosis_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('d'))
+            : undefined
+    }
 }

@@ -86,4 +86,43 @@ export class HumanVariantService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a patient to a human_variant
+    async addPatient(id: string, patient_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $id
+            })
+            MATCH (a:patient {
+                ID: $patient_id
+            })
+            MERGE (p) - [:HAS_PATIENT] -> (a)
+            RETURN p`,
+            { id, patient_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
+
+    // remove a patient from a human_variant
+    async removePatient(id: string, patient_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $id
+            })
+            MATCH (a:patient {
+                ID: $patient_id
+            })
+            MATCH (p) - [r:HAS_PATIENT] -> (a)
+            DELETE r
+            RETURN p`,
+            { id, patient_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }
