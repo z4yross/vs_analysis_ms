@@ -76,17 +76,17 @@ export class StrainService {
     }
 
     // add a sample to a strain
-    async addSample(id: string, sample_id: string): Promise<Entity | undefined> {
+    async addSample(id: string, provided_by: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
             MATCH (s:sample {
-                ID: $sample_id
+                provided_by: $provided_by
             })
             CREATE (p) -[:has_sample]-> (s)
             RETURN p`,
-            { id, sample_id }
+            { id, provided_by }
         )
 
         return res.records.length
@@ -95,18 +95,18 @@ export class StrainService {
     }
 
     // remove a sample from a strain
-    async removeSample(id: string, sample_id: string): Promise<Entity | undefined> {
+    async removeSample(id: string, provided_by: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
             MATCH (s:sample {
-                ID: $sample_id
+                provided_by: $provided_by
             })
             MATCH (p) -[r:has_sample]-> (s)
             DELETE r
             RETURN p`,
-            { id, sample_id }
+            { id, provided_by }
         )
 
         return res.records.length
