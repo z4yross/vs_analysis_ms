@@ -3,19 +3,21 @@ import dayjs from 'dayjs'
 
 export class CreateDTO {
     @IsNotEmpty()
-    seq_method: string;
+    seq_method: string
 
     @IsNotEmpty()
-    processing_date: string;
+    processing_date: string
 
     @IsNotEmpty()
-    origin: string;
+    origin: string
 
     @IsNotEmpty()
-    type: string;
+    type: string
 
     @IsNotEmpty()
-    provided_by: string;
+    provided_by: string
 
-    date: string = dayjs().format();
+    state: string = 'created'
+
+    date: string = dayjs().format()
 }

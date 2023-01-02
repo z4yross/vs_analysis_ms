@@ -1,7 +1,7 @@
-import { UpdateDto } from './update.dto';
+import { UpdateDTO } from './update.dto';
 
-describe('UpdateDto', () => {
+describe('UpdateDTO', () => {
   it('should be defined', () => {
-    expect(new UpdateDto()).toBeDefined();
+    expect(new UpdateDTO()).toBeDefined();
   });
 });
