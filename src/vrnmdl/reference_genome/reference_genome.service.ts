@@ -122,4 +122,43 @@ export class ReferenceGenomeService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a reference_contig to a reference_genome
+    async addReferenceContig(reference_genome_id: string, reference_contig_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $reference_genome_id
+            })
+            MATCH (a:reference_contig {
+                ID: $reference_contig_id
+            })
+            CREATE (p) - [:reference_contig] -> (a)
+            RETURN p`,
+            { reference_genome_id, reference_contig_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
+
+    // remove a reference_contig from a reference_genome
+    async removeReferenceContig(reference_genome_id: string, reference_contig_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $reference_genome_id
+            })
+            MATCH (a:reference_contig {
+                ID: $reference_contig_id
+            })
+            MATCH (p) -[r:reference_contig]-> (a)
+            DELETE r
+            RETURN p`,
+            { reference_genome_id, reference_contig_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }

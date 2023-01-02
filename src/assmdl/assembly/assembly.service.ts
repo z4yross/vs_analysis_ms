@@ -84,7 +84,7 @@ export class AssemblyService {
             MATCH (s:sample {
                 provided_by: $provided_by
             })
-            MERGE (p) -[:ASSEMBLY_OF]-> (s)
+            CREATE (p) -[:ASSEMBLY_OF]-> (s)
             RETURN p`,
             { id, provided_by }
         )

@@ -86,4 +86,43 @@ export class ReferenceBaseService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a assembly_base to a reference_base
+    async addAssemblyBaseToReferenceBase(assembly_base_id: string, reference_base_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $reference_base_id
+            })
+            MATCH (a:assembly_base {
+                ID: $assembly_base_id
+            })
+            CREATE (p) -[:has]-> (a)
+            RETURN p`,
+            { assembly_base_id, reference_base_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
+
+    // remove a assembly_base from a reference_base
+    async removeAssemblyBaseFromReferenceBase(assembly_base_id: string, reference_base_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $reference_base_id
+            })
+            MATCH (a:assembly_base {
+                ID: $assembly_base_id
+            })
+            MATCH (p) -[r:has]-> (a)
+            DELETE r
+            RETURN p`,
+            { assembly_base_id, reference_base_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }

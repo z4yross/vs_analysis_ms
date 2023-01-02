@@ -120,7 +120,7 @@ export class ProteinService {
             MATCH (g:gene {
                 ID: $gene_id
             })
-            MERGE (p) -[:HAS_GENE]-> (g)
+            CREATE (p) -[:HAS_GENE]-> (g)
             RETURN p`,
             { id, gene_id }
         )

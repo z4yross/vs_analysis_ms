@@ -74,4 +74,43 @@ export class AssemblyBaseService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a assembly_read to a assembly_base
+    async addAssemblyReadToAssemblyBase(assembly_read_id: string, assembly_base_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $assembly_base_id
+            })
+            MATCH (a:assembly_read {
+                ID: $assembly_read_id
+            })
+            CREATE (p) -[:assembly_read]-> (a)
+            RETURN p`,
+            { assembly_read_id, assembly_base_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
+
+    // remove a assembly_read from a assembly_base
+    async removeAssemblyReadFromAssemblyBase(assembly_read_id: string, assembly_base_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $assembly_base_id
+            })
+            MATCH (a:assembly_read {
+                ID: $assembly_read_id
+            })
+            MATCH (p) -[r:assembly_read]-> (a)
+            DELETE r
+            RETURN p`,
+            { assembly_read_id, assembly_base_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }

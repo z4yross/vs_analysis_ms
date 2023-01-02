@@ -74,4 +74,43 @@ export class AssemblyReadService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a sample to an assembly
+    async addSampleToAssembly(assembly_id: string, sample_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $assembly_id
+            })
+            MATCH (a:sample {
+                ID: $sample_id
+            })
+            CREATE (p) -[:HAS_SAMPLE]-> (a)
+            RETURN p`,
+            { assembly_id, sample_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
+
+    // remove a sample from an assembly
+    async removeSampleFromAssembly(assembly_id: string, sample_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $assembly_id
+            })
+            MATCH (a:sample {
+                ID: $sample_id
+            })
+            MATCH (p) -[r:HAS_SAMPLE]-> (a)
+            DELETE r
+            RETURN p`,
+            { assembly_id, sample_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }

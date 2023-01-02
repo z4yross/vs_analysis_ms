@@ -96,7 +96,7 @@ export class HumanVariantService {
             MATCH (a:patient {
                 ID: $patient_id
             })
-            MERGE (p) - [:HAS_PATIENT] -> (a)
+            CREATE (p) - [:HAS_PATIENT] -> (a)
             RETURN p`,
             { id, patient_id }
         )

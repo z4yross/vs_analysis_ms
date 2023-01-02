@@ -110,4 +110,43 @@ export class ReferenceContigService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a reference_base to a reference_contig
+    async addReferenceBaseToReferenceContig(reference_contig_id: string, reference_base_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $reference_contig_id
+            })
+            MATCH (a:reference_base {
+                ID: $reference_base_id
+            })
+            CREATE (p) -[r:reference_base]-> (a)
+            RETURN p`,
+            { reference_contig_id, reference_base_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
+
+    // remove a reference_base from a reference_contig
+    async removeReferenceBaseFromReferenceContig(reference_contig_id: string, reference_base_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $reference_contig_id
+            })
+            MATCH (a:reference_base {
+                ID: $reference_base_id
+            })
+            MATCH (p) -[r:reference_base]-> (a)
+            DELETE r
+            RETURN p`,
+            { reference_contig_id, reference_base_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }

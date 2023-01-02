@@ -108,7 +108,7 @@ export class GeneService {
             MATCH (f:feature {
                 ID: $feature_id
             })
-            MERGE (p) -[:HAS_FEATURE]-> (f)
+            CREATE (p) -[:HAS_FEATURE]-> (f)
             RETURN p`,
             { id, feature_id }
         )

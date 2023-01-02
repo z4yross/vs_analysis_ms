@@ -96,7 +96,7 @@ export class DiagnosisService {
             MATCH (p:patient {
                 ID: $patient_id
             })
-            MERGE (d) - [:has_patient] -> (p)
+            CREATE (d) - [:has_patient] -> (p)
             RETURN d`,
             { patient_id, diagnosis_id }
         )
