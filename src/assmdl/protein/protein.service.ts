@@ -34,7 +34,7 @@ export class ProteinService {
     }
 
     // all protein of a gene
-    async proteinOfGene(id: string): Promise<Entity[] | undefined> {
+    async proteinsOfGene(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (g:gene{ID: $id}) RETURN p`,
             { id }
@@ -46,7 +46,7 @@ export class ProteinService {
     }
 
     // all protein of a feature
-    async proteinOfFeature(id: string): Promise<Entity[] | undefined> {
+    async proteinsOfFeature(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (g:gene) -- (f:feature{ID: $id}) RETURN p`,
             { id }
@@ -58,7 +58,7 @@ export class ProteinService {
     }
 
     // all protein of a assembly
-    async proteinOfAsembly(id: string): Promise<Entity[] | undefined> {
+    async proteinsOfAssembly(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (g:gene) -- (f:feature) -- (a:assembly{ID: $id}) RETURN p`,
             { id }
@@ -70,7 +70,7 @@ export class ProteinService {
     }
 
     // all protein of a sample
-    async proteinOfSample(provided_by: string): Promise<Entity[] | undefined> {
+    async proteinsOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (g:gene) -- (f:feature) -- (a:assembly) -- (s:sample{provided_by: $provided_by}) RETURN p`,
             { provided_by }

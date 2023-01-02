@@ -34,7 +34,7 @@ export class IntergenicRegionService {
     }
 
     // all intergenic region of a feature
-    async intergenicRegionOfFeature(id: string): Promise<Entity[] | undefined> {
+    async intergenicRegionsOfFeature(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (f:feature{ID: $id}) RETURN p`,
             { id }
@@ -46,7 +46,7 @@ export class IntergenicRegionService {
     }
 
     // all intergenic region of a assembly
-    async intergenicRegionOfAsembly(id: string): Promise<Entity[] | undefined> {
+    async intergenicRegionsOfAssembly(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (:feature) -- (a:assembly{ID: $id}) RETURN p`,
             { id }
@@ -58,7 +58,7 @@ export class IntergenicRegionService {
     }
 
     // all intergenic region of a sample
-    async intergenicRegionOfSample(provided_by: string): Promise<Entity[] | undefined> {
+    async intergenicRegionsOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (:feature) -- (:assembly) -- (s:sample{provided_by: $provided_by}) RETURN p`,
             { provided_by }

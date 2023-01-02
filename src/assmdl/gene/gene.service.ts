@@ -34,7 +34,7 @@ export class GeneService {
     }
 
     // all gene of a feature
-    async geneOfFeature(id: string): Promise<Entity[] | undefined> {
+    async genesOfFeature(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} -- (f:feature{ID: $id}) RETURN p`,
             { id }
@@ -46,7 +46,7 @@ export class GeneService {
     }
 
     // all gene of a assembly
-    async geneOfAsembly(id: string): Promise<Entity[] | undefined> {
+    async genesOfAssembly(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} -- (:feature) -- (a:assembly{ID: $id}) RETURN p`,
             { id }
@@ -58,7 +58,7 @@ export class GeneService {
     }
 
     // all gene of a sample
-    async geneOfSample(provided_by: string): Promise<Entity[] | undefined> {
+    async genesOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (:feature) -- (:assembly) -- (s:sample{provided_by: $provided_by}) RETURN p`,
             { provided_by }

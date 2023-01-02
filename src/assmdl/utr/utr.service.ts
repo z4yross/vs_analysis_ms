@@ -34,7 +34,7 @@ export class UtrService {
     }
 
     // all utr of a feature
-    async utrOfFeature(id: string): Promise<Entity[] | undefined> {
+    async utrsOfFeature(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} -- (f:feature{ID: $id}) RETURN p`,
             { id }
@@ -46,7 +46,7 @@ export class UtrService {
     }
 
     // all utr of a assembly
-    async utrOfAssembly(id: string): Promise<Entity[] | undefined> {
+    async utrsOfAssembly(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (f:feature) -- (a:assembly{ID: $id}) RETURN p`,
             { id }
@@ -58,7 +58,7 @@ export class UtrService {
     }
 
     // all utr of a sample
-    async utrOfSample(provided_by: string): Promise<Entity[] | undefined> {
+    async utrsOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (f:feature) -- (a:assembly) -- (s:sample{provided_by: $provided_by}) RETURN p`,
             { provided_by }
