@@ -34,7 +34,7 @@ export class DiagnosisService {
     }
 
     // all diagnoses for a patient
-    async diagnosesOfPation(id: string): Promise<Entity[] | undefined> {
+    async diagnosesOfPatient(id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL}) -- (a:patient{ID: $id}) RETURN p`,
             { id }

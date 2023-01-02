@@ -76,7 +76,7 @@ export class PatientService {
     }
 
     // add a sample to a patient
-    async addSampleToPatient(sample_id: string, patient_id: string): Promise<Entity | undefined> {
+    async addSample(sample_id: string, patient_id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} {
                 ID: $patient_id
@@ -95,7 +95,7 @@ export class PatientService {
     }
 
     // remove a sample from a patient
-    async removeSampleFromPatient(sample_id: string, patient_id: string): Promise<Entity | undefined> {
+    async removeSample(sample_id: string, patient_id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} {
                 ID: $patient_id
