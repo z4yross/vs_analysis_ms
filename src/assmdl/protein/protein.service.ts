@@ -110,4 +110,23 @@ export class ProteinService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a gene to a protein
+    async addGene(id: string, gene_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $id
+            })
+            MATCH (g:gene {
+                ID: $gene_id
+            })
+            MERGE (p) -[:HAS_GENE]-> (g)
+            RETURN p`,
+            { id, gene_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }

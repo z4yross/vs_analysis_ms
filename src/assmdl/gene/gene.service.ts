@@ -98,4 +98,23 @@ export class GeneService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a feature to a gene
+    async addFeature(id: string, feature_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $id
+            })
+            MATCH (f:feature {
+                ID: $feature_id
+            })
+            MERGE (p) -[:HAS_FEATURE]-> (f)
+            RETURN p`,
+            { id, feature_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }

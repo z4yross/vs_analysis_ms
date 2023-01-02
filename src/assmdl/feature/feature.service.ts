@@ -110,4 +110,23 @@ export class FeatureService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add a feature to an assembly
+    async addFeatureToAssembly(assembly_id: string, feature_id: string) {
+        const res = await this.neo4jService.write(
+            `MATCH (f:${this.CLASS_LABEL} {
+                ID: $feature_id
+            })
+            MATCH (a:assembly {
+                ID: $assembly_id
+            })
+            CREATE (a) -[:has]-> (f)
+            RETURN f`,
+            { assembly_id, feature_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('f'))
+            : undefined
+    }
 }

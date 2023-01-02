@@ -74,4 +74,23 @@ export class AssemblyService {
 
         return res.records.length ? 'done' : undefined
     }
+
+    // add sample to assembly
+    async addSampleToAssembly(id: string, provided_by: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $id
+            })
+            MATCH (s:sample {
+                provided_by: $provided_by
+            })
+            MERGE (p) -[:ASSEMBLY_OF]-> (s)
+            RETURN p`,
+            { id, provided_by }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('p'))
+            : undefined
+    }
 }
