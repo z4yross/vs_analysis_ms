@@ -34,7 +34,7 @@ export class CityService {
     }
 
     // get city of a sample
-    async cityOfSanple(provided_by: string): Promise<Entity[] | undefined> {
+    async cityOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (s:sample {provided_by: $provided_by} -- z:zone --> c:city) RETURN c`,
             { provided_by }
