@@ -26,6 +26,7 @@
     "@nestjs/platform-express": "^9.0.0",
     "class-validator": "^0.13.2",
     "dayjs": "^1.11.7",
+    "dockerode": "^3.3.4",
     "nest-neo4j": "^0.2.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

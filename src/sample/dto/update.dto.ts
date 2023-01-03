@@ -7,5 +7,4 @@ export class UpdateDTO {
     origin: string
     type: string
     date: string = dayjs().format()
-    state: string
 }

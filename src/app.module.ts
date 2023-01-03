@@ -10,6 +10,7 @@ import { VsmdlModule } from './vsmdl/vsmdl.module';
 import { PtnmdlModule } from './ptnmdl/ptnmdl.module';
 import { LctmdlModule } from './lctmdl/lctmdl.module';
 import { VrnmdlModule } from './vrnmdl/vrnmdl.module';
+import { PipelineModule } from './pipeline/pipeline.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { VrnmdlModule } from './vrnmdl/vrnmdl.module';
     PtnmdlModule,
     LctmdlModule,
     VrnmdlModule,
+    PipelineModule,
   ],
   controllers: [AppController],
   providers: [AppService],

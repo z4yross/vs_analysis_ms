@@ -17,7 +17,5 @@ export class CreateDTO {
     @IsNotEmpty()
     provided_by: string
 
-    state: string = 'created'
-
     date: string = dayjs().format()
 }
