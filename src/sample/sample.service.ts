@@ -98,7 +98,7 @@ export class SampleService {
         }
 
         return res.records.length
-            ? new Entity(res.records[0].get('p'))46
+            ? new Entity(res.records[0].get('p'))
             : undefined
     }
 
