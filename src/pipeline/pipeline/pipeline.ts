@@ -1,10 +1,16 @@
+import { Injectable } from '@nestjs/common';
 import { Dockerode } from 'dockerode';
 
 // Pipeline monitor and control class for spawning and managing child processes
+// This should be a custom singleton provider 
+
+@Injectable()
 export class PipelineMonitor{
     private readonly DOCKER_HOST: string = process.env.DOCKER_HOST || 'localhost';
     private readonly DOCKER_PORT: string = process.env.DOCKER_PORT || '2375';
     private readonly DOCKER_PROTOCOL: string = process.env.DOCKER_PROTOCOL || 'tcp';
+
+    private pipelines: Map<string, any> = new Map<string, any>();
 
     constructor(private readonly dockerode: Dockerode) {
         if (process.env.DOCKER_SOCKET)
@@ -29,6 +35,15 @@ export class PipelineMonitor{
         volumes[`${volumeName}/out`] = '/vigilant/out';
         volumes[`${volumeName}/variant`] = '/vigilant/variants';
 
-        return this.dockerode.run(imageName, [], process.stdout, {Volumes: volumes});
+        let pp = this.dockerode.run(imageName, [], process.stdout, {Volumes: volumes});
+
+        this.pipelines.set(`${provided_by}/${project_id}`, pp);
+        return pp;
+    }
+
+    // stop pipeline container
+    async stopPipeline(provided_by: string, project_id: string): Promise<void> {
+        let pp = this.pipelines.get(`${provided_by}/${project_id}`);
+        return pp.stopPipeline();
     }
 }
