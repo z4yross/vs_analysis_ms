@@ -9,4 +9,5 @@ export class UpdateDTO {
 
     @IsNotEmpty()
     processing_state: string
+    
 }
