@@ -1,0 +1,49 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "labels": {
+      "io.kompose.service": "vs-pipeline-pp"
+    },
+    "name": "vs-pipeline-pp-deployment"
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "io.kompose.service": "vs-pipeline-pp"
+      }
+    },
+    "strategy": {},
+    "template": {
+      "metadata": {
+        "labels": {
+          "io.kompose.network/al-network": "true",
+          "io.kompose.service": "vs-pipeline-pp"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "image": "z4yross/vs-pipeline-pp",
+            "name": "vs-pipeline-pp",
+            "ports": [
+              {
+                "containerPort": 3000
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "vs-storage-ms-claim0",
+                "mountPath": "/storage"
+              }
+            ],
+            "resources": {}
+          }
+        ],
+        "restartPolicy": "Never"
+      }
+    }
+  },
+  "status": {}
+}
