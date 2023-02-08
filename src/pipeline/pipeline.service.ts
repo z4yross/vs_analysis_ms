@@ -4,7 +4,7 @@ import { Connection } from 'amqplib'
 import { Neo4jService } from 'nest-neo4j/dist'
 import { InjectAmqpConnection } from 'nestjs-amqp'
 
-import { PipelineMonitor } from './pipeline/pipeline';
+import { PipelineMonitor } from './pipeline/pipeline'
 
 import { CreateDTO } from './dto/create.dto'
 import { UpdateDTO } from './dto/update.dto'
@@ -21,7 +21,7 @@ export class PipelineService {
         @Inject()
         private readonly pipelineMonitor: PipelineMonitor
     ) {
-        pipelineMonitor.pullImage('z4yross/vs_vigilant_pp:latest');
+        pipelineMonitor.pullImage('z4yross/vs_vigilant_pp:latest')
     }
 
     async create(data: CreateDTO): Promise<Entity | undefined> {
@@ -89,13 +89,15 @@ export class PipelineService {
 
         update.modified_at = new Date().toISOString()
 
-        // get sample of pipeline 
-        const sample_provided_by = (await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} {
+        // get sample of pipeline
+        const sample_provided_by = (
+            await this.neo4jService.read(
+                `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             }) -- (a:sample)
-            RETURN a`,
-        )).records[0].get('a').properties.provided_by;
+            RETURN a`
+            )
+        ).records[0].get('a').properties.provided_by
 
         // TODO:
         // If the processing_state is = 'started', then we need to update the processing_date, start the processing pipeline, notify by message queue and update processing_message
@@ -106,7 +108,11 @@ export class PipelineService {
         if (update.processing_state === 'started') {
             update.processing_date = new Date().toISOString()
             update.processing_message = 'started'
-            this.pipelineMonitor.runPipeline('z4yross/vs_vigilant_pp:latest', sample_provided_by, id);
+            this.pipelineMonitor.runPipeline(
+                'z4yross/vs_vigilant_pp:latest',
+                sample_provided_by,
+                id
+            )
         } else if (update.processing_state === 'processed') {
             update.processing_date = new Date().toISOString()
             update.processing_message = 'processed'
@@ -116,7 +122,7 @@ export class PipelineService {
         } else if (update.processing_state === 'deleted') {
             update.processing_date = new Date().toISOString()
             update.processing_message = 'deleted'
-            this.pipelineMonitor.stopPipeline(sample_provided_by, id);
+            this.pipelineMonitor.stopPipeline(sample_provided_by, id)
         }
 
         const res = await this.neo4jService.read(

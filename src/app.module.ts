@@ -13,6 +13,7 @@ import { PtnmdlModule } from './ptnmdl/ptnmdl.module';
 import { LctmdlModule } from './lctmdl/lctmdl.module';
 import { VrnmdlModule } from './vrnmdl/vrnmdl.module';
 import { PipelineModule } from './pipeline/pipeline.module';
+import { ParserModule } from './parser/parser.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { PipelineModule } from './pipeline/pipeline.module';
     LctmdlModule,
     VrnmdlModule,
     PipelineModule,
+    ParserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
