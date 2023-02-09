@@ -21,6 +21,20 @@ export class CityZoneService {
             : undefined
     }
 
+    // find zone by name
+    async findByName(name: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (z:zone {
+                name: $name
+            }) RETURN z`,
+            { name }
+        )
+
+        return res.records.length
+            ? res.records.map((r) => new Entity(r.get('z')))[0]
+            : undefined
+    }
+
     // get zone of sample
     async zoneOfSample(provided_by: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(

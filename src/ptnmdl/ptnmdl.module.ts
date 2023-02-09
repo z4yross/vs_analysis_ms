@@ -5,5 +5,6 @@ import { HumanVariantModule } from './human_variant/human_variant.module';
 
 @Module({
   imports: [PatientModule, DiagnosisModule, HumanVariantModule],
+  exports: [PatientModule, DiagnosisModule, HumanVariantModule],
 })
 export class PtnmdlModule {}

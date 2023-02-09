@@ -1,7 +1,7 @@
-import { CreateDto } from './create.dto';
+import { CreateDTO } from './create.dto';
 
 describe('CreateDto', () => {
   it('should be defined', () => {
-    expect(new CreateDto()).toBeDefined();
+    expect(new CreateDTO()).toBeDefined();
   });
 });

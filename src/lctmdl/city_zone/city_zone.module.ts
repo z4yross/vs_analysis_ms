@@ -4,6 +4,7 @@ import { CityZoneController } from './city_zone.controller';
 
 @Module({
   providers: [CityZoneService],
-  controllers: [CityZoneController]
+  controllers: [CityZoneController],
+  exports: [CityZoneService]
 })
 export class CityZoneModule {}

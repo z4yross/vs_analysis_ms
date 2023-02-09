@@ -8,4 +8,6 @@ export class CreateDTO {
     type: string
     provided_by: string
     date: string = dayjs().format()
+    alias: string
+    barcode: string
 }

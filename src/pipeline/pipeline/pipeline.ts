@@ -71,4 +71,10 @@ export class PipelineMonitor{
         const logs = await Client.api.v1.namespaces('default').pods(pod.body.items[0].metadata.name).log.get();
         return logs;
     }
+
+    // get node cpu and memory usage
+    async getNodeUsage(): Promise<void> {
+        const node = await Client.api.v1.nodes.get();
+        return node;
+    }
 }

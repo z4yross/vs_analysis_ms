@@ -5,6 +5,7 @@ import { ProvinceModule } from './province/province.module';
 import { CountryModule } from './country/country.module';
 
 @Module({
-  imports: [CityZoneModule, CityModule, ProvinceModule, CountryModule]
+  imports: [CityZoneModule, CityModule, ProvinceModule, CountryModule],
+  exports: [CityZoneModule, CityModule, ProvinceModule, CountryModule]
 })
 export class LctmdlModule {}

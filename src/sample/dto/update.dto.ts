@@ -7,4 +7,6 @@ export class UpdateDTO {
     origin: string
     type: string
     date: string = dayjs().format()
+    alias: string
+    barcode: string
 }
