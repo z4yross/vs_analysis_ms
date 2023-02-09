@@ -9,6 +9,8 @@ import { CountryModule } from '../lctmdl/country/country.module'
 import { ProvinceModule } from '../lctmdl/province/province.module'
 
 import { PatientModule } from '../ptnmdl/patient/patient.module'
+
+import { PipelineModule } from '../pipeline/pipeline.module'
 @Module({
     providers: [ParserService],
     controllers: [ParserController],
@@ -19,6 +21,7 @@ import { PatientModule } from '../ptnmdl/patient/patient.module'
         CountryModule,
         ProvinceModule,
         PatientModule,
+        PipelineModule,
     ],
 })
 export class ParserModule {}

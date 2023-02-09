@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { Connection } from 'amqplib'
 
 import { Neo4jService } from 'nest-neo4j/dist'
@@ -18,11 +18,9 @@ export class PipelineService {
         private readonly neo4jService: Neo4jService,
         @InjectAmqpConnection()
         private readonly amqp: Connection,
-        @Inject()
-        private readonly pipelineMonitor: PipelineMonitor
-    ) {
-        pipelineMonitor.pullImage('z4yross/vs_vigilant_pp:latest')
-    }
+        // @Inject()
+        // private readonly pipelineMonitor: PipelineMonitor
+    ) {}
 
     async create(data: CreateDTO): Promise<Entity | undefined> {
         return this.neo4jService
@@ -45,85 +43,66 @@ export class PipelineService {
             : undefined
     }
 
-    // all pipelines of a sample
-    async pipelinesOfSample(
-        provided_by: string
-    ): Promise<Entity[] | undefined> {
+    // all pipelines of a batch
+    async getBatchPipelines(batch_id: string): Promise<Entity[] | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL}) -- (a:sample{provided_by: $provided_by}) RETURN p`,
-            { provided_by }
+            `MATCH (b:batch {
+                ID: $batch_id
+            }) -- (p:${this.CLASS_LABEL})
+            RETURN p`,
+            { batch_id }
         )
 
         return res.records.length
-            ? res.records.map((r) => new Entity(r.get('p')))
+            ? res.records.map((record) => new Entity(record.get('p')))
+            : undefined
+    }
+
+    // batch of a pipeline
+    async getPipelineBatch(pipeline_id: string): Promise<Entity | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (p:${this.CLASS_LABEL} {
+                ID: $pipeline_id
+            }) -- (b:batch)
+            RETURN b`,
+            { pipeline_id }
+        )
+
+        return res.records.length
+            ? new Entity(res.records[0].get('b'))
             : undefined
     }
 
     async update(id: string, state: string): Promise<Entity | undefined> {
         const update: UpdateDTO = new UpdateDTO()
+        const current = (await this.get(id)).get()
 
+        // validate state [queued, started, processed, failed, deleted, aborted]
         if (
+            state !== 'queued' &&
             state !== 'started' &&
             state !== 'processed' &&
             state !== 'failed' &&
-            state !== 'deleted'
+            state !== 'deleted' &&
+            state !== 'aborted' &&
+            state !== 'stopped'
         )
             throw new Error('Invalid state')
-
-        update.processing_state = state
-
-        // if current state is 'failed' or 'deleted', then we cannot update the state
-        const current = (await this.get(id)).get()
-        if (
-            current.processing_state === 'failed' ||
-            current.processing_state === 'deleted'
-        ) {
-            throw new Error(
-                'Cannot update the state of a failed or deleted pipeline'
-            )
-        }
 
         // if current state is same as the new state, then we cannot update the state
         if (current.processing_state === state)
             throw new Error('Cannot update the state to the same state')
 
+        // get batch of the pipeline
+        const batch = (await this.getPipelineBatch(id)).get()
+        
+        update.processing_state = state
+        update.processing_message = state
         update.modified_at = new Date().toISOString()
-
-        // get sample of pipeline
-        const sample_provided_by = (
-            await this.neo4jService.read(
-                `MATCH (p:${this.CLASS_LABEL} {
-                ID: $id
-            }) -- (a:sample)
-            RETURN a`
-            )
-        ).records[0].get('a').properties.provided_by
-
-        // TODO:
-        // If the processing_state is = 'started', then we need to update the processing_date, start the processing pipeline, notify by message queue and update processing_message
-        // If the processing_state is = 'processed', then we need to update the processing_date, notify by message queue and update processing_message
-        // If the processing_state is = 'failed', then we need to update the processing_date, stop the processing pipeline, notify by message queue and update processing_message
-        // If the processing_state is = 'deleted', then we need to update the processing_date, stop the processing pipeline, notify by message queue and update processing_message
-
-        if (update.processing_state === 'started') {
+        update.processing_date = undefined
+        
+        if(state === 'started')
             update.processing_date = new Date().toISOString()
-            update.processing_message = 'started'
-            this.pipelineMonitor.runPipeline(
-                'z4yross/vs_vigilant_pp:latest',
-                sample_provided_by,
-                id
-            )
-        } else if (update.processing_state === 'processed') {
-            update.processing_date = new Date().toISOString()
-            update.processing_message = 'processed'
-        } else if (update.processing_state === 'failed') {
-            update.processing_date = new Date().toISOString()
-            update.processing_message = 'failed'
-        } else if (update.processing_state === 'deleted') {
-            update.processing_date = new Date().toISOString()
-            update.processing_message = 'deleted'
-            this.pipelineMonitor.stopPipeline(sample_provided_by, id)
-        }
 
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} {
@@ -154,20 +133,20 @@ export class PipelineService {
             : undefined
     }
 
-    async addPipelineToSample(
+    async addPipeilineToBatch(
         pipeline_id: string,
-        sample_id: string
+        batch_id: string
     ): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} {
                 ID: $pipeline_id
             })
-            MATCH (s:sample {
-                ID: $sample_id
+            MATCH (b:batch {
+                ID: $batch_id
             })
-            CREATE (p)-[:PROCESS]->(s)
+            CREATE (p)-[:PROCESS]->(b)
             RETURN p`,
-            { pipeline_id, sample_id }
+            { pipeline_id, batch_id }
         )
 
         return res.records.length
@@ -175,21 +154,20 @@ export class PipelineService {
             : undefined
     }
 
-    async removePipelineFromSample(
+    async removePipelineFromBatch(
         pipeline_id: string,
-        sample_id: string
+        batch_id: string
     ): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
             `MATCH (p:${this.CLASS_LABEL} {
                 ID: $pipeline_id
             })
-            MATCH (s:sample {
-                ID: $sample_id
+            MATCH (b:batch {
+                ID: $batch_id
             })
-            MATCH (p)-[r:PROCESS]->(s)
-            DELETE r
+            DELETE (p)-[:PROCESS]->(b)
             RETURN p`,
-            { pipeline_id, sample_id }
+            { pipeline_id, batch_id }
         )
 
         return res.records.length
@@ -197,46 +175,89 @@ export class PipelineService {
             : undefined
     }
 
-    async addAssembly(
-        pipeline_id: string,
-        assembly_id: string
-    ): Promise<Entity | undefined> {
-        const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} {
-                ID: $pipeline_id
-            })
-            MATCH (a:assembly {
-                ID: $assembly_id
-            })
-            CREATE (p)-[:PRODUCE]->(a)
-            RETURN p`,
-            { pipeline_id, assembly_id }
-        )
+    // async addPipelineToSample(
+    //     pipeline_id: string,
+    //     sample_id: string
+    // ): Promise<Entity | undefined> {
+    //     const res = await this.neo4jService.read(
+    //         `MATCH (p:${this.CLASS_LABEL} {
+    //             ID: $pipeline_id
+    //         })
+    //         MATCH (s:sample {
+    //             ID: $sample_id
+    //         })
+    //         CREATE (p)-[:PROCESS]->(s)
+    //         RETURN p`,
+    //         { pipeline_id, sample_id }
+    //     )
 
-        return res.records.length
-            ? new Entity(res.records[0].get('p'))
-            : undefined
-    }
+    //     return res.records.length
+    //         ? new Entity(res.records[0].get('p'))
+    //         : undefined
+    // }
 
-    async removeAssembly(
-        pipeline_id: string,
-        assembly_id: string
-    ): Promise<Entity | undefined> {
-        const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} {
-                ID: $pipeline_id
-            })
-            MATCH (a:assembly {
-                ID: $assembly_id
-            })
-            MATCH (p)-[r:PRODUCE]->(a)
-            DELETE r
-            RETURN p`,
-            { pipeline_id, assembly_id }
-        )
+    // async removePipelineFromSample(
+    //     pipeline_id: string,
+    //     sample_id: string
+    // ): Promise<Entity | undefined> {
+    //     const res = await this.neo4jService.read(
+    //         `MATCH (p:${this.CLASS_LABEL} {
+    //             ID: $pipeline_id
+    //         })
+    //         MATCH (s:sample {
+    //             ID: $sample_id
+    //         })
+    //         MATCH (p)-[r:PROCESS]->(s)
+    //         DELETE r
+    //         RETURN p`,
+    //         { pipeline_id, sample_id }
+    //     )
 
-        return res.records.length
-            ? new Entity(res.records[0].get('p'))
-            : undefined
-    }
+    //     return res.records.length
+    //         ? new Entity(res.records[0].get('p'))
+    //         : undefined
+    // }
+
+    // async addAssembly(
+    //     pipeline_id: string,
+    //     assembly_id: string
+    // ): Promise<Entity | undefined> {
+    //     const res = await this.neo4jService.read(
+    //         `MATCH (p:${this.CLASS_LABEL} {
+    //             ID: $pipeline_id
+    //         })
+    //         MATCH (a:assembly {
+    //             ID: $assembly_id
+    //         })
+    //         CREATE (p)-[:PRODUCE]->(a)
+    //         RETURN p`,
+    //         { pipeline_id, assembly_id }
+    //     )
+
+    //     return res.records.length
+    //         ? new Entity(res.records[0].get('p'))
+    //         : undefined
+    // }
+
+    // async removeAssembly(
+    //     pipeline_id: string,
+    //     assembly_id: string
+    // ): Promise<Entity | undefined> {
+    //     const res = await this.neo4jService.read(
+    //         `MATCH (p:${this.CLASS_LABEL} {
+    //             ID: $pipeline_id
+    //         })
+    //         MATCH (a:assembly {
+    //             ID: $assembly_id
+    //         })
+    //         MATCH (p)-[r:PRODUCE]->(a)
+    //         DELETE r
+    //         RETURN p`,
+    //         { pipeline_id, assembly_id }
+    //     )
+
+    //     return res.records.length
+    //         ? new Entity(res.records[0].get('p'))
+    //         : undefined
+    // }
 }

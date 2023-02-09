@@ -5,7 +5,9 @@ import { Entity } from './entity/entity'
 
 import { Neo4jService } from 'nest-neo4j'
 
-import fs from 'fs'
+import dayjs from 'dayjs'
+
+import * as fs from 'fs'
 
 import { SampleService } from '../sample/sample.service'
 import { CreateDTO as CreateSampleDTO } from '../sample/dto/create.dto'
@@ -17,6 +19,9 @@ import { ProvinceService } from '../lctmdl/province/province.service'
 
 import { PatientService } from '../ptnmdl/patient/patient.service'
 import { CreateDTO as CreatePatientDTO } from '../ptnmdl/patient/dto/create.dto'
+
+import { PipelineService } from '../pipeline/pipeline.service'
+import { CreateDTO as CreatePipelineDTO } from '../pipeline/dto/create.dto'
 
 @Injectable()
 export class ParserService {
@@ -30,10 +35,10 @@ export class ParserService {
         patient_weight: /^\d{1,3}(\.\d{1,2})?|N$/,
         patient_marital_status: /^[SMDN]$/,
         patient_alive: /^[01]$/,
-        zone: /^[a-zA-Z0-9 ]{1,30}$/,
-        city: /^[a-zA-Z ]{1,30}$/,
-        province: /^[a-zA-Z ]{1,30}$/,
-        country: /^[a-zA-Z ]{1,30}$/,
+        zone: /^[0-9]{1,5}$/,
+        city: /^[0-9]{1,5}$/,
+        province: /^[0-9]{1,5}$/,
+        // country: /^[a-zA-Z ]{1,30}$/,
         sample_barcode: /^\d{1,20}$/,
         sample_id: /^\d{1,20}$/,
         sample_alias: /^[a-zA-Z0-9 ]{1,30}$/,
@@ -46,8 +51,52 @@ export class ParserService {
         private readonly cityZoneService: CityZoneService,
         private readonly countryService: CountryService,
         private readonly provinceService: ProvinceService,
-        private readonly patientService: PatientService
+        private readonly patientService: PatientService,
+        private readonly pipelineService: PipelineService
     ) {}
+
+    async read_csv(csv_loc: string): Promise<string> {
+        const csv = fs.readFileSync(csv_loc, 'utf8')
+        return csv
+    }
+
+    validateCSV(csv: String) {
+        const lines = csv.split('\r')
+        const fields = lines.map((line) =>
+            line.split(',').map((field) => field.trim())
+        )
+
+        for (let i = 1; i < fields.length; i++) {
+            if (fields[i].length !== fields[0].length) return false
+            for (let j = 0; j < fields[i].length; j++) {
+                if (
+                    !this.regexes[Object.keys(this.regexes)[j]].test(
+                        fields[i][j]
+                    )
+                )
+                    return false
+            }
+        }
+    }
+
+    csvToJson(csv: String) {
+        const lines = csv.split('\r')
+        const fields = lines.map((line) =>
+            line.split(',').map((field) => field.trim())
+        )
+
+        const json = fields.map((line, index) => {
+            if (index === 0) return
+            const obj = {}
+            for (let i = 0; i < line.length; i++) {
+                obj[fields[0][i]] = line[i]
+            }
+            return obj
+        })
+
+        json.shift()
+        return json
+    }
 
     async createBatch(
         provided_by: string,
@@ -98,8 +147,7 @@ export class ParserService {
             )
 
             // get zone
-            const zone = (await this.cityZoneService.findByName(row.zone)).get()
-            // TODO: if zone does not exist, create it
+            const zone = (await this.cityZoneService.get(row.zone)).get()
 
             // set zone to sample
             await this.cityZoneService.addZoneToSample(
@@ -115,89 +163,115 @@ export class ParserService {
         }
     }
 
+    // creates a cvb file with columns sample_id, barcode
+    async createSampleSheet(data: CreateDTO, parsed: any[], batch_id: number) {
+        const csv_loc = `/storage/${data.provided_by}/${batch_id}/sample_sheet/sample_sheet.csv`
+        const csv = 'sample_id,barcode\r'
+        const rows = parsed.map((row) => {
+            return `${row.sample_id},${row.sample_barcode}`
+        })
+
+        fs.writeFileSync(csv_loc, csv + rows.join('\r'))
+
+        // TODO: notify to storage ms using the message queue that a new file has been created
+    }
+
     async create(data: CreateDTO): Promise<Entity | undefined> {
-        // read csv file
         const csv_loc = data.data
         const csv = await this.read_csv(csv_loc)
 
-        // validate csv file
         const valid = this.validateCSV(csv)
         if (!valid) return undefined
-        // parse csv file
+
         const parsed = this.csvToJson(csv)
 
-        // create batch
         const batch_entity = await this.createBatch(data.provided_by, data.date)
 
         const batch = batch_entity.get()
         const batch_id = batch.identity.low
 
-        // create samples
-        await this.createSamples(parsed, batch_id)
+        await this.createSampleSheet(data, parsed, batch_id)
+        // register pipeline
+
+        const pipelineDTO: CreatePipelineDTO = new CreatePipelineDTO()
+        const pipe = (await this.pipelineService.create(pipelineDTO)).get()
+        const pipe_id = pipe.identity.low
+
+        // add relationship between batch and pipeline
+        await this.pipelineService.addPipeilineToBatch(pipe_id, batch_id)
+
         return batch_entity
     }
 
-    async read_csv(csv_loc: string): Promise<string> {
-        const csv = fs.readFileSync(csv_loc, 'utf8')
-        return csv
+    async queueBatchProcessing(
+        batch_id: string,
+        provided_by: string
+    ): Promise<boolean> {
+        // TODO: get pipiline with relationship batch->pipeline
+        // update pipeline processing_state to queued
+
+        // check if there is a batch with the id and provided_by
+        const batch = (
+            await this.neo4jService.read(
+                `MATCH (b:batch) WHERE ID(b) = $batch_id AND b.provided_by = $provided_by RETURN b`,
+                { batch_id, provided_by }
+            )
+        ).records[0].get('b')
+
+        if (!batch) throw new Error('Batch not found')
+
+        const pipeline = (
+            await this.pipelineService.getPipelineBatch(batch_id)
+        ).get()
+        // if the pipeline is not in [created, processed, failed, stopped] state, throw error
+        const allowed_states = ['created', 'processed', 'failed', 'stopped']
+        if (!allowed_states.includes(pipeline.properties.processing_state))
+            throw new Error('Pipeline is not in a valid state')
+
+        // update pipeline processing_state to queued
+        await this.pipelineService.update(pipeline.identity.low, 'queued')
+
+        return true
     }
 
-    // validate fields of csv string separated by commas with regexes
-    validateCSV(csv: String) {
-        // split csv string into array of lines backslash r is carriage return
-        const lines = csv.split('\r')
-        // split each line into array of fields
-        // clean trailing spaces of each field
-        const fields = lines.map((line) =>
-            line.split(',').map((field) => field.trim())
+    async abortBatchProcessing(
+        batch_id: string,
+        provided_by: string
+    ): Promise<boolean> {
+        // TODO: get pipiline with relationship batch->pipeline
+        // update pipeline processing_state to aborted
+
+        // check if there is a batch with the id and provided_by
+        const batch = (
+            await this.neo4jService.read(
+                `MATCH (b:batch) WHERE ID(b) = $batch_id AND b.provided_by = $provided_by RETURN b`,
+                { batch_id, provided_by }
+            )
+        ).records[0].get('b')
+
+        if (!batch) throw new Error('Batch not found')
+
+        const pipeline = (
+            await this.pipelineService.getPipelineBatch(batch_id)
+        ).get()
+        // if the pipeline is not in [started] state, throw error
+        const allowed_states = ['started']
+        if (!allowed_states.includes(pipeline.properties.processing_state))
+            throw new Error('Pipeline is not in a valid state')
+
+        // update pipeline processing_state to aborted
+        await this.pipelineService.update(pipeline.identity.low, 'aborted')
+        return true
+    }
+
+    async getAllBatchsOfProvider(provided_by: string): Promise<Entity[] | undefined> {
+        const res = await this.neo4jService.read(
+            `MATCH (b:batch) WHERE b.provided_by = $provided_by RETURN b`,
+            { provided_by }
         )
-        // validate each field, skip first line (headers)
-        // if there is a field that does not match the regex, return false
-        // if line does not have the same number of fields as headers, return false
-        for (let i = 1; i < fields.length; i++) {
-            if (fields[i].length !== fields[0].length) return false
-            for (let j = 0; j < fields[i].length; j++) {
-                if (
-                    !this.regexes[Object.keys(this.regexes)[j]].test(
-                        fields[i][j]
-                    )
-                )
-                    return false
-            }
-        }
-    }
 
-    csvToJson(csv: String) {
-        // split csv string into array of lines backslash r is carriage return
-        const lines = csv.split('\r')
-        // split each line into array of fields
-        // clean trailing spaces of each field
-        // for the zone, city, province and country fields replace empty spaces with underscore and set to lower caseF
-        const fields = lines.map((line) => {
-            const fields = line.split(',').map((field) => field.trim())
-            fields[9] = fields[9].replace(/ /g, '_').toLowerCase()
-            fields[10] = fields[10].replace(/ /g, '_').toLowerCase()
-            fields[11] = fields[11].replace(/ /g, '_').toLowerCase()
-            fields[12] = fields[12].replace(/ /g, '_').toLowerCase()
-            return fields
-        })
-        // convert each line into an object with keys from headers
-        const json = fields.map((line, index) => {
-            if (index === 0) return
-            const obj = {}
-            for (let i = 0; i < line.length; i++) {
-                obj[fields[0][i]] = line[i]
-            }
-            return obj
-        })
-        // remove first element (headers)
-        json.shift()
-        return json
-    }
-
-
-    async runBatch(batch_id: number): Promise<boolean> {
-
-        return false
+        return res.records.length ?
+            res.records.map((record) => new Entity(record.get('b'))) :
+            undefined
     }
 }

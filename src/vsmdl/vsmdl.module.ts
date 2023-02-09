@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { StrainModule } from 'src/strain/strain.module';
-import { VirusModule } from 'src/virus/virus.module';
+import { StrainModule } from './strain/strain.module';
+import { VirusModule } from './virus/virus.module';
 
 @Module({
     imports:[
