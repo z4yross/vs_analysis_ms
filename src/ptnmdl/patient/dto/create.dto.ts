@@ -1,5 +1,5 @@
 import { IsNotEmpty } from 'class-validator'
-import dayjs from 'dayjs'
+import * as dayjs from 'dayjs'
 
 export class CreateDTO {
     code: string
@@ -10,5 +10,5 @@ export class CreateDTO {
     height: string
     weight: string
     marital_status: string
-    alive: string
+    alive: boolean
 }

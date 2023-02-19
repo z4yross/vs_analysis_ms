@@ -5,14 +5,9 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 import { Neo4jModule, Neo4jScheme } from 'nest-neo4j';
 
-import {AmqpModule} from 'nestjs-amqp';
-
 import { SampleModule } from './sample/sample.module';
-import { AssmdlModule } from './assmdl/assmdl.module';
-import { VsmdlModule } from './vsmdl/vsmdl.module';
 import { PtnmdlModule } from './ptnmdl/ptnmdl.module';
 import { LctmdlModule } from './lctmdl/lctmdl.module';
-import { VrnmdlModule } from './vrnmdl/vrnmdl.module';
 import { PipelineModule } from './pipeline/pipeline.module';
 import { ParserModule } from './parser/parser.module';
 
@@ -29,19 +24,10 @@ import { ConfigModule } from 'nestjs-dotenv';
       username: process.env.NEO4J_USER || 'neo4j',
       password: process.env.NEO4J_PASS || 'vs-analysis-ms',
     }),
-    // AmqpModule.forRoot({
-    //   // name: process.env.AMQP_NAME || 'rabbitmq',
-    //   hostname: process.env.AMQP_HOST ||'localhost',
-    //   port: Number(process.env.AMQP_PORT) || 5672,
-    //   username: process.env.AMQP_USER || 'vs-mq',
-    //   password: process.env.AMQP_PASS || 'vs-mq',
-    // }),
+
     SampleModule,
-    AssmdlModule,
-    VsmdlModule,
     PtnmdlModule,
     LctmdlModule,
-    VrnmdlModule,
     PipelineModule,
     ParserModule,
   ],

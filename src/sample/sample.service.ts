@@ -46,7 +46,7 @@ export class SampleService {
     }
 
     async update(id: string, update: UpdateDTO): Promise<Entity | undefined> {
-        const res = await this.neo4jService.read(
+        const res = await this.neo4jService.write(
             `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })
@@ -61,7 +61,7 @@ export class SampleService {
     }
 
     async delete(id: string): Promise<string | undefined> {
-        const res = await this.neo4jService.read(
+        const res = await this.neo4jService.write(
             `MATCH (p:${this.CLASS_LABEL} {
                 ID: $id
             })

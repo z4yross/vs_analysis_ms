@@ -1,5 +1,5 @@
 import { IsNotEmpty } from 'class-validator'
-import dayjs from 'dayjs'
+import * as dayjs from 'dayjs'
 
 export class UpdateDTO {
     modified_at: string

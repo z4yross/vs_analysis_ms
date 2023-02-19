@@ -19,16 +19,14 @@ export class ParserController {
     }
 
     // update batch state with provided_by, batch_id and state
-    @Post(':provided_by/:batch_id/:state')
+    @Post("/state/")
     async updateBatchState(
-        @Param('provided_by') provided_by: string,
-        @Param('batch_id') batch_id: string,
-        @Param('state') state: number
+        @Body() { provided_by, batch_id, state }
     ): Promise<Boolean | undefined> {
         if(state === 1) 
-            return this.parserService.queueBatchProcessing(provided_by, batch_id);
+            return this.parserService.queueBatchProcessing(batch_id, provided_by);
         else if(state === 0) 
-            return this.parserService.abortBatchProcessing(provided_by, batch_id);
+            return this.parserService.abortBatchProcessing(batch_id, provided_by);
         else
             throw new Error('Invalid state');
     }

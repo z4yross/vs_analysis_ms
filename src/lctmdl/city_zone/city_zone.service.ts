@@ -50,14 +50,11 @@ export class CityZoneService {
     // add zone to sample
     async addZoneToSample(sample_id: string, code: number): Promise<Entity | undefined> { // add zone to sample
         const res = await this.neo4jService.write(
-            `MATCH (s:sample {
-                ID: $sample_id
-            })
-            MATCH (z:zone {
-                code: $code
-            })
-            MERGE (s)-[:in]->(z)
-            RETURN s`,
+            `MATCH (s:sample)
+            MATCH (z:zone)
+            WHERE ID(s) = $sample_id AND z.code = $code
+            CREATE (s)-[:in]->(z)
+            RETURN s, z`,
             { sample_id, code }
         )
 
@@ -69,13 +66,8 @@ export class CityZoneService {
     // remove zone from sample
     async removeZoneFromSample(sample_id: string, code: number): Promise<Entity | undefined> {
         const res = await this.neo4jService.write(
-            `MATCH (s:sample {
-                ID: $sample_id
-            }),
-            MATCH (z:zone {
-                code: $code
-            })
-            MATCH (s)-[r:in]->(z)
+            `MATCH (s:sample) -[r]- (z:zone { code: $code })
+            WHERE ID(s) = $sample_id
             DELETE r
             RETURN s`,
             { sample_id, code }

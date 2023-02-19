@@ -1,20 +1,25 @@
 import { Module } from '@nestjs/common'
 import { PipelineService } from './pipeline.service'
 import { PipelineController } from './pipeline.controller'
-import { PipelineMonitor } from './pipeline/pipeline'
+import { ClientsModule, Transport } from '@nestjs/microservices'
 
-import { AmqpModule } from 'nestjs-amqp'
 @Module({
     imports: [
-        AmqpModule.forRoot({
-            // name: process.env.AMQP_NAME || 'rabbitmq',
-            hostname: process.env.AMQP_HOST || 'localhost',
-            port: Number(process.env.AMQP_PORT) || 5672,
-            username: process.env.AMQP_USER || 'vs-mq',
-            password: process.env.AMQP_PASS || 'vs-mq',
-        }),
+        ClientsModule.register([
+            {
+                name: 'PROJECTS_DATA_SERVICE',
+                transport: Transport.RMQ,
+                options: {
+                    urls: [process.env.AMQP_URL || "amqp://vs-mq:vs-mq@localhost"],
+                    queue: 'projects-data',
+                    queueOptions: {
+                        durable: true,
+                    },
+                },
+            },
+        ]),
     ],
-    providers: [PipelineService, PipelineMonitor],
+    providers: [PipelineService],
     controllers: [PipelineController],
     exports: [PipelineService],
 })

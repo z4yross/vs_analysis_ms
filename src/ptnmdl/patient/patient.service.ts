@@ -22,9 +22,9 @@ export class PatientService {
 
     async get(id: string): Promise<Entity | undefined> {
         const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} {
-                ID: $id
-            }) RETURN p`,
+            `MATCH (p:${this.CLASS_LABEL})
+            WHERE ID(p) = $id
+            RETURN p`,
             { id }
         )
 
@@ -46,10 +46,9 @@ export class PatientService {
     }
 
     async update(id: string, update: UpdateDTO): Promise<Entity | undefined> {
-        const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} {
-                ID: $id
-            })
+        const res = await this.neo4jService.write(
+            `MATCH (p:${this.CLASS_LABEL})
+            WHERE ID(p) = $id
             SET p += $update
             RETURN p`,
             { id, update }
@@ -61,10 +60,9 @@ export class PatientService {
     }
 
     async delete(id: string): Promise<string | undefined> {
-        const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} {
-                ID: $id
-            })
+        const res = await this.neo4jService.write(
+            `MATCH (p:${this.CLASS_LABEL})
+            WHERE ID(p) = $id
             REMOVE p
             RETURN p`,
             { id }
@@ -77,13 +75,9 @@ export class PatientService {
 
     // add a sample to a patient
     async addSample(sample_id: string, patient_id: string): Promise<Entity | undefined> {
-        const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} {
-                ID: $patient_id
-            })
-            MATCH (s:sample {
-                ID: $sample_id
-            })
+        const res = await this.neo4jService.write(
+            `MATCH (p:${this.CLASS_LABEL}), (s:sample)
+            WHERE ID(p) = $patient_id AND ID(s) = $sample_id
             CREATE (p) -[:HAS_SAMPLE]-> (s)
             RETURN p`,
             { patient_id, sample_id }
@@ -96,56 +90,12 @@ export class PatientService {
 
     // remove a sample from a patient
     async removeSample(sample_id: string, patient_id: string): Promise<Entity | undefined> {
-        const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} {
-                ID: $patient_id
-            })
-            MATCH (s:sample {
-                ID: $sample_id
-            })
-            MATCH (p) -[r:HAS_SAMPLE]-> (s)
+        const res = await this.neo4jService.write(
+            `MATCH (p:${this.CLASS_LABEL}) -[r]- (s:sample)
+            WHERE ID(p) = $patient_id AND ID(s) = $sample_id
             DELETE r
             RETURN p`,
             { patient_id, sample_id }
-        )
-
-        return res.records.length
-            ? new Entity(res.records[0].get('p'))
-            : undefined
-    }
-
-    // add strain to patient
-    async addStrainToPatient(strain_id: string, patient_id: string): Promise<Entity | undefined> {
-        const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} {
-                ID: $patient_id
-            })
-            MATCH (s:strain {
-                ID: $strain_id
-            })
-            CREATE (p) -[:HAS_STRAIN]-> (s)
-            RETURN p`,
-            { patient_id, strain_id }
-        )
-
-        return res.records.length
-            ? new Entity(res.records[0].get('p'))
-            : undefined
-    }
-
-    // remove strain from patient
-    async removeStrainFromPatient(strain_id: string, patient_id: string): Promise<Entity | undefined> {
-        const res = await this.neo4jService.read(
-            `MATCH (p:${this.CLASS_LABEL} {
-                ID: $patient_id
-            })
-            MATCH (s:strain {
-                ID: $strain_id
-            })
-            MATCH (p) -[r:HAS_STRAIN]-> (s)
-            DELETE r
-            RETURN p`,
-            { patient_id, strain_id }
         )
 
         return res.records.length

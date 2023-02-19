@@ -9,6 +9,7 @@ export class Entity {
         )
 
         return {
+            id: this.node.identity.low,
             ...properties,
         }
     }

@@ -44,14 +44,4 @@ export class PatientController {
     async removePatientFromSample(@Param('sample_id') sample_id: string, @Param('patient_id') patient_id: string): Promise<Entity | undefined> {
         return this.patientService.removeSample(sample_id, patient_id);
     }
-
-    @Put('strain_id/patient_id')
-    async addPatientToStrain(@Param('strain_id') strain_id: string, @Param('patient_id') patient_id: string): Promise<Entity | undefined> {
-        return this.patientService.addStrainToPatient(strain_id, patient_id);
-    }
-
-    @Delete('strain_id/patient_id')
-    async removePatientFromStrain(@Param('strain_id') strain_id: string, @Param('patient_id') patient_id: string): Promise<Entity | undefined> {
-        return this.patientService.removeStrainFromPatient(strain_id, patient_id);
-    }
 }
